@@ -448,3 +448,188 @@ Parameters:
     Description: testing 
     Type: String 
 ```    
+
+### Step 8
+
+> Create Networking infrastructure Resources in the network.yml
+``` 
+Resources:
+
+  # IAM Role to allow EC2 Session Manager to access our server
+  # AWS::IAM::Role
+  RoleForSSMAccess:
+    Type: 'AWS::IAM::Role'
+    Properties: 
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          - Effect: Allow 
+            Principal: 
+              Service: 
+                - ec2.amazonaws.com 
+            Action: 
+              - 'sts:AssumeRole'
+      Path: / 
+      Policies: 
+        - PolicyName: root 
+          PolicyDocument: 
+            Version: "2012-10-17"
+            Statement: 
+              - Effect: Allow 
+                Action: '*'
+                Resource: '*'
+
+# Instance Profile 
+# AWS::IAM::InstanceProfile 
+
+  ServerInstanceProfile: 
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Path: / 
+      Roles: 
+        - !Ref RoleForSSMAccess 
+
+# Create Security Group for the Load Balancer
+# AWS::EC2::SecurityGroup
+  LBSecGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow http to our load balancer
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${EnvironmentName}-VPCID"
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+      #- IpProtocol: tcp 
+       # FromPort: 8080 
+        #ToPort: 8080 
+        #CidrIp: 0.0.0.0/0   
+
+# Create Security Group for the Web Server
+# AWS::EC2::SecurityGroup
+  WebServerSecGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow http to our hosts and SSH from local only
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${EnvironmentName}-VPCID"
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+      - IpProtocol: tcp
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: 0.0.0.0/0  
+
+# Create a Launch Configuration for the Web Instance
+# AWS::AutoScaling::LaunchConfiguration
+  WebAppLaunchConfig:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties: 
+      UserData: 
+        Fn::Base64: !Sub | 
+          #!/bin/bash
+          apt-get update -y
+          apt-get install apache2 -y
+          systemctl start apache2.service
+          cd /var/www/html
+          echo "Udacity Demo Web Server Up and Running!" > index.html  
+      ImageId: ami-0df32f8302dfe67df
+      SecurityGroups: 
+      - Ref: WebServerSecGroup 
+      InstanceType: t3.small 
+      BlockDeviceMappings: 
+      - DeviceName: "/dev/sdk"
+        Ebs: 
+          VolumeSize: '10'
+
+# Create an Autoscaling Group for the Launch Configuration
+# AWS::AutoScaling::AutoScalingGroup 
+  WebAppGroup: 
+    Type: AWS::AutoScaling::AutoScalingGroup 
+    Properties: 
+      VPCZoneIdentifier: 
+      - Fn::ImportValue: 
+          !Sub "${EnvironmentName}-PRIV-NETS"  
+      LaunchConfigurationName:
+        Ref: WebAppLaunchConfig 
+      MinSize: '3'
+      MaxSize: '5'
+      TargetGroupARNs: 
+      - Ref: WebAppTargetGroup 
+      HealthCheckGracePeriod: 60 
+      HealthCheckType: ELB   
+
+# Create an Elastic Load Balancer for our Public Subnets
+# AWS::ElasticLoadBalancingV2::LoadBalancer 
+  WebAppLB: 
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer 
+    Properties: 
+      Subnets: 
+      - Fn::ImportValue: !Sub "${EnvironmentName}-PUB1-SN"
+      - Fn::ImportValue: !Sub "${EnvironmentName}-PUB2-SN" 
+      SecurityGroups: 
+      - Ref: LBSecGroup 
+
+# Create a Listener for the Target Group and Load Balancer
+# AWS::ElasticLoadBalancingV2::Listener 
+  Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener 
+    Properties: 
+      DefaultActions: 
+      - Type: forward 
+        TargetGroupArn: 
+          Ref: WebAppTargetGroup 
+      LoadBalancerArn: 
+        Ref: WebAppLB
+      Port: '80'
+      Protocol: HTTP  
+
+# Create a Listener Rule
+# AWS::ElasticLoadBalancingV2::ListenerRule 
+  ALBListenerRule: 
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule 
+    Properties: 
+      Actions: 
+      - Type: forward 
+        TargetGroupArn: !Ref 'WebAppTargetGroup'
+      Conditions: 
+      - Field: path-pattern 
+        Values: [/]
+      ListenerArn: !Ref 'Listener'   
+      Priority: 1
+
+# Create a Target Group 
+# AWS::ElasticLoadBalancingV2::TargetGroup 
+  WebAppTargetGroup: 
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup 
+    Properties:
+      HealthCheckIntervalSeconds: 10 
+      HealthCheckPath: / 
+      HealthCheckProtocol: HTTP 
+      HealthCheckTimeoutSeconds: 8 
+      HealthyThresholdCount: 2 
+      Port: 80 
+      Protocol: HTTP 
+      UnhealthyThresholdCount: 5 
+      VpcId: 
+        Fn::ImportValue:
+          Fn::Sub: "${EnvironmentName}-VPCID"           
+
+``` 
