@@ -52,9 +52,39 @@ $ aws configure --profile your Profilename
 
 ### Step 2
 
-> create a YAML file for our networking resource.
+> create a YAML file for our networking resource and a JSON file for the parameters.
 ```
-touch network.yml
+touch network.yml parameters.json 
+```
+> Declear our parameters in the JSON file
+
+```
+[
+    {
+        "ParameterKey": "EnvironmentName",
+        "ParameterValue": "Project2"
+    },
+    {
+        "ParameterKey": "VpcCIDRProject2",
+        "ParameterValue": "10.0.0.0/16"
+    },
+    {
+        "ParameterKey": "PublicSubnet1CIDRProject2",
+        "ParameterValue": "10.0.0.0/24"
+    },
+    {
+        "ParameterKey":"PublicSubnet2CIDRProject2",
+        "ParameterValue":"10.0.1.0/24"
+    },
+    {
+        "ParameterKey": "PrivateSubnet1CIDRProject2",
+        "ParameterValue": "10.0.2.0/24"
+    },
+    {
+        "ParameterKey": "PrivateSubnet2CIDRProject2",
+        "ParameterValue": "10.0.3.0/24"
+    }
+]
 ```
 
 > Declear cloudFormation version and Description in the network.yml file
