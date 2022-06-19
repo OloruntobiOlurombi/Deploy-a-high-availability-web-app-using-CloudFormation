@@ -63,6 +63,43 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Oloruntobi / Project Two - This template deploys a VPC
 ```
 
+### Step 3 
+
+> Declear the following parameters.
+```
+Parameters: 
+
+  EnvironmentName:
+    Description: testing 
+    Type: String 
+
+  VpcCIDRProject2:
+    Default: 10.0.0.0/16 
+    Description: testing 
+    Type: String  
+
+  PublicSubnet1CIDRProject2:
+    Default: 10.0.0.0/24
+    Description: testing 
+    Type: String 
+
+  PublicSubnet2CIDRProject2:
+    Default: 10.0.1.0/24
+    Description: testing 
+    Type: String     
+
+  PrivateSubnet1CIDRProject2:
+    Default: 10.0.2.0/24
+    Description: testing 
+    Type: String 
+
+  PrivateSubnet2CIDRProject2:
+    Default: 10.0.3.0/24
+    Description: testing 
+    Type: String 
+```    
+    
+
 
 
 
