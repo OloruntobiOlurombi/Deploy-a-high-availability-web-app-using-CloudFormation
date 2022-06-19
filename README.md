@@ -56,7 +56,8 @@ $ aws configure --profile your Profilename
 ```
 touch network.yml
 ```
-> Declear cloudFormation version and Description
+
+> Declear cloudFormation version and Description in the network.yml file
 ```
 AWSTemplateFormatVersion: 2010-09-09
 Description: Oloruntobi / Project Two - This template deploys a VPC
