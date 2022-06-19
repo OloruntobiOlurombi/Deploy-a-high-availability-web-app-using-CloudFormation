@@ -633,3 +633,22 @@ Resources:
           Fn::Sub: "${EnvironmentName}-VPCID"           
 
 ``` 
+
+### Step 9 
+> Create the networking infrastructure stack via the command line.
+
+``` 
+aws cloudformation create-stack --stack-name ourdemoinfra --template-body file://network.yml    --parameters file://parameter.json  --region=us-east-1
+``` 
+
+### Step 10 
+> Create the server resources stack via the command line.
+
+``` 
+aws cloudformation create-stack --stack-name ourdemoinfra --template-body file://server.yml   --parameters file://server-parameters.json  --region=us-east-1
+``` 
+### Step 11
+> Confirmed that all stack are created successfully.
+
+### Step 12
+> On the AWS console locate the load balancer under the ***EC2 Section*** and use the load balancer URL to visit the Web Instance 
