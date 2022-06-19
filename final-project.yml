@@ -1,0 +1,302 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Oloruntobi / Project Two - This template deploys a VPC
+
+Parameters: 
+
+  EnvironmentName:
+    Description: testing 
+    Type: String 
+
+  VpcCIDRProject2:
+    Default: 10.0.0.0/16 
+    Description: testing 
+    Type: String  
+
+  PublicSubnet1CIDRProject2:
+    Default: 10.0.0.0/24
+    Description: testing 
+    Type: String 
+
+  PublicSubnet2CIDRProject2:
+    Default: 10.0.1.0/24
+    Description: testing 
+    Type: String     
+
+  PrivateSubnet1CIDRProject2:
+    Default: 10.0.2.0/24
+    Description: testing 
+    Type: String 
+
+  PrivateSubnet2CIDRProject2:
+    Default: 10.0.3.0/24
+    Description: testing 
+    Type: String 
+
+Resources:
+# Create VPC 
+  UdacityVPC2:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      CidrBlock: !Ref VpcCIDRProject2
+      EnableDnsHostnames: 'true'
+      Tags:
+      - Key: name
+        Value: !Ref EnvironmentName
+
+# Create an Internet Gateway for our public subnets 
+  myInternetGateway:
+    Type: 'AWS::EC2::InternetGateway'
+    Properties:
+      Tags:
+      - Key: Name 
+        Value: !Ref EnvironmentName   
+
+# Create an Attachment for our Internet Gateway 
+  myInternetGatewayAttachment:
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Properties:
+      VpcId: !Ref UdacityVPC2
+      InternetGatewayId: !Ref myInternetGateway    
+
+#  Create the First Public Subnet for our server
+  PublicSubnet1: 
+    Type: 'AWS::EC2::Subnet'
+    Properties: 
+      VpcId: !Ref UdacityVPC2
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: !Ref PublicSubnet1CIDRProject2
+      MapPublicIpOnLaunch: true 
+      Tags:
+        - Key: Name 
+          Value: !Sub ${EnvironmentName} Public Subnet (AZ1)   
+
+# Create the Second Public Subnet for our server              
+  PublicSubnet2: 
+    Type: 'AWS::EC2::Subnet' 
+    Properties: 
+      VpcId: !Ref UdacityVPC2
+      AvailabilityZone: !Select [1, !GetAZs '']
+      CidrBlock: !Ref PublicSubnet2CIDRProject2
+      MapPublicIpOnLaunch: true 
+      Tags:
+        - Key: Name 
+          Value: !Sub ${EnvironmentName} Public Subnet (AZ2)
+
+# Create the First Private Subnet for our server 
+  PrivateSubnet1: 
+    Type: 'AWS::EC2::Subnet' 
+    Properties:
+      VpcId: !Ref UdacityVPC2
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: !Ref PrivateSubnet1CIDRProject2
+      MapPublicIpOnLaunch: false 
+      Tags:
+        - Key: Name 
+          Value: !Sub ${EnvironmentName} Private Subnet (AZ1)    
+
+# Create the First Private Subnet for our server 
+
+  PrivateSubnet2: 
+    Type: 'AWS::EC2::Subnet' 
+    Properties:
+      VpcId: !Ref UdacityVPC2
+      AvailabilityZone: !Select [1, !GetAZs '']
+      CidrBlock: !Ref PrivateSubnet2CIDRProject2
+      MapPublicIpOnLaunch: false 
+      Tags: 
+        - Key: Name 
+          Value: !Sub ${EnvironmentName} Private Subnet (AZ2)
+
+# Create the first Elastic IP Address for the NatGateway   
+
+  NatGateway1EIP:
+    Type: 'AWS::EC2::EIP' 
+    DependsOn: myInternetGatewayAttachment
+    Properties:
+      Domain: vpc 
+
+# Create the Second Elastic IP Address for the NatGateway  
+
+  NatGateway2EIP:
+    Type: 'AWS::EC2::EIP' 
+    DependsOn: myInternetGatewayAttachment
+    Properties: 
+      Domain: vpc 
+
+# Create the First Natgateway for the public subnet 
+
+  NatGateway1: 
+    Type: 'AWS::EC2::NatGateway' 
+    Properties: 
+      AllocationId: 
+        Fn::GetAtt:
+        - NatGateway1EIP
+        - AllocationId
+      SubnetId: 
+        Ref: PublicSubnet1 
+      Tags:
+      - Key: Name 
+        Value: !Ref EnvironmentName 
+
+# Create the Second Natgateway for the public subnet         
+  NatGateway2: 
+    Type: 'AWS::EC2::NatGateway' 
+    Properties: 
+      AllocationId:
+        Fn::GetAtt:
+        - NatGateway2EIP
+        - AllocationId    
+      SubnetId: 
+        Ref: PublicSubnet2 
+      Tags: 
+      - Key: Name 
+        Value: !Ref EnvironmentName 
+
+# Create a public route table for our VPC
+  PublicRouteTable: 
+    Type: 'AWS::EC2::RouteTable'  
+    Properties: 
+      VpcId: !Ref UdacityVPC2
+      Tags: 
+        - Key: Name 
+          Value: !Sub ${EnvironmentName} Public Routes  
+
+# Create a default Public Route for our Route Table
+  DefaultPublicRoute:
+    Type: 'AWS::EC2::Route' 
+    DependsOn: myInternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref myInternetGateway   
+
+# Create a subnet route table association for our first public subnet 1 
+  PublicSubnet1RouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet1 
+
+#  Create a subnet route table association for our second public subnet 1   
+
+  PublicSubnet2RouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation' 
+    Properties: 
+      RouteTableId: !Ref PublicRouteTable 
+      SubnetId: !Ref PublicSubnet2
+
+# Create the first private route table for our VPC      
+
+  PrivateRouteTable1:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref UdacityVPC2
+      Tags: 
+        - Key: Name 
+          Value: !Sub ${EnvironmentName} Private Routes 1 
+
+# Create the first default Private Route for our Route Table    
+
+  DefaultPrivateRoute1:
+    Type: 'AWS::EC2::Route' 
+    Properties: 
+      RouteTableId: !Ref PrivateRouteTable1
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway1 
+
+#  Create a subnet route table association for our first private subnet 1   
+
+  PrivateSubnet1RouteTable1Association:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'  
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable1
+      SubnetId: !Ref PrivateSubnet1  
+
+# Create the second private route table for our VPC   
+
+  PrivateRouteTable2:
+    Type: 'AWS::EC2::RouteTable'  
+    Properties:
+      VpcId: !Ref UdacityVPC2
+      Tags: 
+        - Key: Name 
+          Value: !Sub ${EnvironmentName} Private Routes 2   
+
+# Create the second default Private Route for our Route Table         
+
+  DefaultPrivateRoute2:
+    Type: 'AWS::EC2::Route'
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable2 
+      DestinationCidrBlock: 0.0.0.0/0 
+      NatGatewayId: !Ref NatGateway2       
+
+#  Create a subnet route table association for our second private subnet 1   
+
+  PrivateSubnet2RouteTable2Association:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable2
+      SubnetId: !Ref PrivateSubnet2   
+
+Outputs:
+    
+  UdacityVPC: 
+    Description: A reference to the created VPC 
+    Export:
+      Name: !Sub ${EnvironmentName}-VPCID
+    Value: !Ref UdacityVPC2  
+
+  VPCPublicRouteTable:
+    Description: Public Routing 
+    Value: !Ref PublicRouteTable
+    Export:
+      Name: !Sub ${EnvironmentName}-PUB-RT
+
+  VPCPrivateRouteTable1:
+    Description: Private Routing AZ1 
+    Value: !Ref PrivateRouteTable1
+    Export: 
+      Name: !Sub ${EnvironmentName}-PRI1-RT
+
+  VPCPrivateRouteTable2:
+    Description: Private Routing AZ2 
+    Value: !Ref PrivateRouteTable2
+    Export: 
+      Name: !Sub ${EnvironmentName}-PRI2-RT 
+
+  PublicSubnets: 
+    Description: A list of the public subnets 
+    Value: !Join [ ",", [ !Ref PublicSubnet1, !Ref PublicSubnet2 ]]
+    Export:
+      Name: !Sub ${EnvironmentName}-PUB-NETS
+
+  PrivateSubnets: 
+    Description: A list of the private subnets 
+    Value: !Join [ ",", [ !Ref PrivateSubnet1, !Ref PrivateSubnet2 ]]
+    Export: 
+      Name: !Sub ${EnvironmentName}-PRIV-NETS     
+
+  PublicSubnet1: 
+    Description: A reference to the public subnet in the 1st Availability Zone 
+    Value: !Ref PublicSubnet1 
+    Export: 
+      Name: !Sub ${EnvironmentName}-PUB1-SN 
+
+  PublicSubnet2: 
+    Description: A reference to the public subnet in the 2nd Availability Zone
+    Value: !Ref PublicSubnet2 
+    Export: 
+      Name: !Sub ${EnvironmentName}-PUB2-SN
+
+  PrivateSubnet1: 
+    Description: A reference to the private subnet in the 1st Availability Zone
+    Value: !Ref PrivateSubnet1 
+    Export: 
+      Name: !Sub ${EnvironmentName}-PRI1-SN
+
+  PrivateSubnet2: 
+    Description: A reference to the private subnet in the 2nd Availability Zone
+    Value: !Ref PrivateSubnet2
+    Export: 
+      Name: !Sub ${EnvironmentName}-PRI2-SN                 
