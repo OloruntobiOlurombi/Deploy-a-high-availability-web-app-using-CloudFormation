@@ -50,4 +50,18 @@
 $ aws configure --profile your Profilename
 ```
 
+### Step 2
+
+> create a YAML file for our networking resource.
+```
+touch network.yml
+```
+> Declear cloudFormation version and Description
+```
+AWSTemplateFormatVersion: 2010-09-09
+Description: Oloruntobi / Project Two - This template deploys a VPC
+```
+
+
+
 
