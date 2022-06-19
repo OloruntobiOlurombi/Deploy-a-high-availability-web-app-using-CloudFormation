@@ -438,3 +438,13 @@ Parameters:
     Type: String 
 ```
 
+### Step 7
+
+> Declear the following parameters.
+```
+Parameters:
+
+  EnvironmentName:
+    Description: testing 
+    Type: String 
+```    
