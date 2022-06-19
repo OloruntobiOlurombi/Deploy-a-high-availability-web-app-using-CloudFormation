@@ -20,6 +20,8 @@
 
      > Route table.
 
+     > Export the stack output.
+
 - > Server and associated resources section consists of the following:
 
      > Security groups.
@@ -29,6 +31,14 @@
      > Launch configuration.
       
      > Load balancer
+
+### Project Structure 
+
+![image](https://user-images.githubusercontent.com/40290711/174498906-37c4772b-3171-4118-a36d-59a6f83938f8.png)
+
+#### Let get Started!!!!
+
+
 
 
 
