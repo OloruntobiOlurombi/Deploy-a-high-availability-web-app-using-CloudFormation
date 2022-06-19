@@ -409,4 +409,32 @@ Outputs:
       Name: !Sub ${EnvironmentName}-PRI2-SN                 
 ``` 
 
+### Step 6
+
+> create a YAML file for our server resource and a JSON file for the parameters.
+```
+touch server.yml server-parameters.json
+```
+> Declear our parameters in the JSON file
+
+``` 
+[
+    {
+        "ParameterKey": "EnvironmentName",
+        "ParameterValue": "Project2"
+    }
+]
+```
+
+> Declear cloudFormation version and Description in the server.yml file
+```
+AWSTemplateFormatVersion: 2010-09-09
+Description: Oloruntobi / Project Two - This template deploys Servers Resources
+
+Parameters:
+
+  EnvironmentName:
+    Description: testing 
+    Type: String 
+```
 
