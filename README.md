@@ -39,9 +39,15 @@
 
 ![image](https://user-images.githubusercontent.com/40290711/174498906-37c4772b-3171-4118-a36d-59a6f83938f8.png)
 
-#### Let get Started!!!!
+### Let get Started!!!!
 
+### Step 1
 
+- aws configure
+> We have to create a new profile using aws configure command. This require access key and secret key to make profile and this profile will be used in terraform provider for authentication.
 
+```
+$ aws configure --profile your Profilename
+```
 
 
