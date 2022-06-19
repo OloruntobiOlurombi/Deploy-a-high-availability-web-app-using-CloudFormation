@@ -645,10 +645,14 @@ aws cloudformation create-stack --stack-name ourdemoinfra --template-body file:/
 > Create the server resources stack via the command line.
 
 ``` 
-aws cloudformation create-stack --stack-name ourdemoinfra --template-body file://server.yml   --parameters file://server-parameters.json  --region=us-east-1
+aws cloudformation create-stack --stack-name ourdemoinfra --template-body file://server.yml   --parameters file://server-parameters.json  --region=us-east-1  --capabilities "CAPABILITY_IAM" "CAPABILITY_NAMED_IAM"
 ``` 
 ### Step 11
 > Confirmed that all stack are created successfully.
 
 ### Step 12
-> On the AWS console locate the load balancer under the ***EC2 Section*** and use the load balancer URL to visit the Web Instance 
+> On the AWS console locate the load balancer under the ***EC2 Section*** and use the load balancer URL to visit the Web Instance.
+
+![image](https://user-images.githubusercontent.com/40290711/174502127-422b2b3f-b690-4468-886a-9e0455da8b28.png)
+
+### The End
